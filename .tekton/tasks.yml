@@ -50,3 +50,29 @@ spec:
         python -m pip install --upgrade pip wheel
         pip install -r requirements.txt
         nosetests $(params.args)
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-and-push
+spec:
+  workspaces:
+    - name: source
+  params:
+    - name: IMAGE
+      description: The name of the image to build and push.
+      type: string
+  steps:
+    - name: build
+      image: quay.io/buildah/stable:latest
+      script: |
+        #!/bin/bash
+        set -e
+        buildah bud -t $(params.IMAGE) $(workspaces.source.path)
+    - name: push
+      image: quay.io/buildah/stable:latest
+      script: |
+        #!/bin/bash
+        set -e
+        buildah push $(params.IMAGE)
